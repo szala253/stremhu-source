@@ -80,7 +80,7 @@ class TorrentStream(BaseModel):
                     file_index=file.index,
                     playback_id=str(uuid.uuid4()),
                     transcode_audio=True,
-                    target_codec="aac",
+                    target_codec="ac3",
                 )
             )
 
@@ -94,7 +94,7 @@ class TorrentStream(BaseModel):
                     file_size=file.size,
                     file_index=file.index,
                     play_url=f"{app_url}/api/{user.api_key}/stream/{stream_token}",
-                    transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}",
+                    transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}/master.m3u8",
                     seeders=indexer_torrent.seeders,
                     attributes=[],
                     is_persisted_torrent=False,
@@ -196,7 +196,7 @@ class TorrentStream(BaseModel):
                 imdb_id=indexer_torrent.imdb_id,
                 series_info=series,
                 transcode_audio=True,
-                target_codec="aac",
+                target_codec="ac3",
             )
         )
 
@@ -214,6 +214,6 @@ class TorrentStream(BaseModel):
             file_size=torrent_file_info.size,
             file_index=file_index,
             play_url=f"{app_url}/api/{user.api_key}/stream/{stream_token}",
-            transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}",
+            transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}/master.m3u8",
             is_persisted_torrent=False,
         )

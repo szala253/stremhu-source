@@ -96,8 +96,8 @@ async def stream(
         from app.modules.stream.transcoder import AudioTranscoder
 
         transcoder = AudioTranscoder(
-            target_codec=stream_token.target_codec or "aac",
-            bitrate=stream_token.audio_bitrate or "384k",
+            target_codec=stream_token.target_codec or "ac3",
+            bitrate=stream_token.audio_bitrate or "640k",
         )
 
         if request.method == "HEAD":
@@ -173,6 +173,111 @@ async def stream(
             status_code=status_code,
             headers=headers,
         )
+    )
+
+
+@router.get(
+    "/{stream_token}/master.m3u8",
+)
+async def get_master_playlist(
+    api_key: str,
+    stream_token: str,
+) -> Response:
+    from app.modules.stream.hls import HLSManager
+
+    return Response(
+        content=HLSManager.generate_master_playlist(),
+        media_type="application/vnd.apple.mpegurl",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@router.get(
+    "/{stream_token}/index.m3u8",
+)
+async def get_media_playlist(
+    request: Request,
+    api_key: str,
+    stream_token: Annotated[StreamToken, Depends(get_parsed_stream_token)],
+) -> Response:
+    from app.config import config
+    from app.modules.stream.hls import HLSManager
+    from app.modules.stream.utils.stream_token import generate_stream_token
+
+    with isolated_db_session() as local_db:
+        stream_service = create_stream_service(local_db)
+        _, file = await stream_service.prepare_for_stream(
+            range_header=None,
+            indexer_id=stream_token.indexer_id,
+            torrent_id=stream_token.torrent_id,
+            file_index=stream_token.file_index,
+        )
+
+    estimated_duration = max(300.0, file.size / (1.25 * 1024 * 1024))
+    raw_token_payload = stream_token.model_copy(update={"transcode_audio": False})
+    raw_token_str = generate_stream_token(raw_token_payload)
+    raw_url = f"https://127.0.0.1:{config.port}/api/{api_key}/stream/{raw_token_str}"
+
+    duration = await HLSManager.get_stream_duration(
+        raw_stream_url=raw_url,
+        cache_key=f"{stream_token.indexer_id}:{stream_token.torrent_id}:{stream_token.file_index}",
+        estimated_duration=estimated_duration,
+    )
+
+    playlist_content = HLSManager.generate_media_playlist(total_duration=duration)
+    return Response(
+        content=playlist_content,
+        media_type="application/vnd.apple.mpegurl",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
+@router.get(
+    "/{stream_token}/segment_{segment_idx}.ts",
+)
+async def get_segment(
+    request: Request,
+    api_key: str,
+    stream_token: Annotated[StreamToken, Depends(get_parsed_stream_token)],
+    segment_idx: int,
+) -> StreamingResponse:
+    from app.config import config
+    from app.modules.stream.hls import HLSManager
+    from app.modules.stream.utils.stream_token import generate_stream_token
+
+    with isolated_db_session() as local_db:
+        stream_service = create_stream_service(local_db)
+        _, file = await stream_service.prepare_for_stream(
+            range_header=None,
+            indexer_id=stream_token.indexer_id,
+            torrent_id=stream_token.torrent_id,
+            file_index=stream_token.file_index,
+        )
+
+    estimated_duration = max(300.0, file.size / (1.25 * 1024 * 1024))
+    raw_token_payload = stream_token.model_copy(update={"transcode_audio": False})
+    raw_token_str = generate_stream_token(raw_token_payload)
+    raw_url = f"https://127.0.0.1:{config.port}/api/{api_key}/stream/{raw_token_str}"
+
+    duration = await HLSManager.get_stream_duration(
+        raw_stream_url=raw_url,
+        cache_key=f"{stream_token.indexer_id}:{stream_token.torrent_id}:{stream_token.file_index}",
+        estimated_duration=estimated_duration,
+    )
+
+    segment_iterator = HLSManager.generate_segment_stream(
+        raw_stream_url=raw_url,
+        segment_index=segment_idx,
+        total_duration=duration,
+        request=request,
+        target_codec=stream_token.target_codec or "ac3",
+        bitrate=stream_token.audio_bitrate or "640k",
+    )
+
+    return StreamingResponse(
+        content=segment_iterator,
+        media_type="video/mp2t",
+        headers={"Cache-Control": "no-store, no-transform"},
     )
 
 

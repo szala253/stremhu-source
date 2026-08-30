@@ -76,10 +76,24 @@ def test_stream_token_transcoding_roundtrip():
 
 
 def test_audio_transcoder_initialization():
-    transcoder = AudioTranscoder(target_codec="aac", bitrate="384k")
-    assert transcoder.target_codec == "aac"
-    assert transcoder.bitrate == "384k"
+    transcoder = AudioTranscoder(target_codec="ac3", bitrate="640k")
+    assert transcoder.target_codec == "ac3"
+    assert transcoder.bitrate == "640k"
     assert transcoder.ffmpeg_bin == "ffmpeg"
+
+
+def test_hls_manager_playlist():
+    from app.modules.stream.hls import HLSManager
+
+    master = HLSManager.generate_master_playlist()
+    assert "#EXTM3U" in master
+    assert "index.m3u8" in master
+
+    media_playlist = HLSManager.generate_media_playlist(total_duration=120.0)
+    assert "#EXT-X-PLAYLIST-TYPE:VOD" in media_playlist
+    assert "segment_0.ts" in media_playlist
+    assert "segment_19.ts" in media_playlist
+    assert "#EXT-X-ENDLIST" in media_playlist
 
 
 def test_stremio_stream_transcoded_view():
@@ -123,7 +137,7 @@ def test_stremio_stream_transcoded_view():
         file_size=1024 * 1024 * 1024 * 4,
         file_index=0,
         play_url="http://localhost:7070/api/key/stream/raw-token",
-        transcoded_play_url="http://localhost:7070/api/key/stream/transcoded-token",
+        transcoded_play_url="http://localhost:7070/api/key/stream/transcoded-token/master.m3u8",
         attributes=[dts_attr, res_attr],
         is_persisted_torrent=False,
     )
@@ -133,10 +147,10 @@ def test_stremio_stream_transcoded_view():
     # Direct stream
     direct_stremio = StremioStream.from_imdb_torrent_stream(dummy_stream, transcoded=False)
     assert direct_stremio.url == "http://localhost:7070/api/key/stream/raw-token"
-    assert "🔄 AAC" not in direct_stremio.name
+    assert "🔄 Dolby 5.1" not in direct_stremio.name
 
     # Transcoded stream
     transcoded_stremio = StremioStream.from_imdb_torrent_stream(dummy_stream, transcoded=True)
-    assert transcoded_stremio.url == "http://localhost:7070/api/key/stream/transcoded-token"
-    assert "🔄 AAC" in transcoded_stremio.name
+    assert transcoded_stremio.url == "http://localhost:7070/api/key/stream/transcoded-token/master.m3u8"
+    assert "🔄 Dolby 5.1" in transcoded_stremio.name
     assert "Transcoded from DTS" in transcoded_stremio.description

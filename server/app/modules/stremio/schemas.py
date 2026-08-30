@@ -158,7 +158,7 @@ class StremioStream(BaseModel):
         transcoded: bool = False,
     ) -> StremioStream:
         file_size = f"💾 {humanize.naturalsize(torrent_stream.file_size, binary=True, format='%.2f')}"
-        name = f"{file_size} | 🔄 Transcoded AAC" if transcoded else file_size
+        name = f"{file_size} | 🔄 Dolby 5.1" if transcoded else file_size
         url = (
             torrent_stream.transcoded_play_url
             if transcoded and torrent_stream.transcoded_play_url
@@ -168,7 +168,7 @@ class StremioStream(BaseModel):
         return cls(
             name=name,
             description=f"📁 {torrent_stream.file_name}"
-            + (" (Audio: AAC Transcoded)" if transcoded else ""),
+            + (" (Audio: Dolby Digital 5.1 Transcoded)" if transcoded else ""),
             url=url,
             behavior_hints=BehaviorHints(
                 filename=cls._build_behavior_filename(
@@ -216,7 +216,7 @@ class StremioStream(BaseModel):
 
         readable_resolutions = format_group(PreferenceKey.RESOLUTION)
         readable_audio_qualities = (
-            "🔊 AAC (Transcoded from DTS)"
+            "🔊 Dolby Digital 5.1 (Transcoded from DTS)"
             if transcoded
             else format_group(PreferenceKey.AUDIO_QUALITY)
         )
@@ -254,7 +254,7 @@ class StremioStream(BaseModel):
         if torrent_stream.is_persisted_torrent:
             readable_is_persisted = "⭐"
 
-        transcoded_badge = "🔄 AAC" if transcoded else None
+        transcoded_badge = "🔄 Dolby 5.1" if transcoded else None
 
         name = " | ".join(
             compact(

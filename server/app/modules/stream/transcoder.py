@@ -26,8 +26,8 @@ class AudioTranscoder:
 
     def __init__(
         self,
-        target_codec: str = "aac",
-        bitrate: str = "384k",
+        target_codec: str = "ac3",
+        bitrate: str = "640k",
         ffmpeg_bin: str = "ffmpeg",
     ):
         self.target_codec = target_codec
@@ -64,7 +64,9 @@ class AudioTranscoder:
             "-i",
             "pipe:0",
             "-map",
-            "0",
+            "0:v:0",
+            "-map",
+            "0:a?",
             "-c:v",
             "copy",
             "-c:a",
@@ -73,8 +75,8 @@ class AudioTranscoder:
             self.bitrate,
             "-c:s",
             "copy",
-            "-max_interleave_delta",
-            "0",
+            "-avoid_negative_ts",
+            "make_zero",
             "-f",
             "matroska",
             "pipe:1",
