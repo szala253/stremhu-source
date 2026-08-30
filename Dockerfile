@@ -16,7 +16,7 @@ FROM python:3.12-slim-bookworm AS runtime
 ARG APP_VERSION=0.0.0
 
 RUN apt-get update && apt-get upgrade -y && \
-  apt-get install -y --no-install-recommends ca-certificates libstdc++6 \
+  apt-get install -y --no-install-recommends ca-certificates libstdc++6 ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # Force glibc to prefer IPv4 over IPv6 (RFC 3484 precedence) to avoid reCAPTCHA issues

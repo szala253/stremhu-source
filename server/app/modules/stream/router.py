@@ -92,6 +92,45 @@ async def stream(
             imdb_info=imdb_info,
         )
 
+    if stream_token.transcode_audio:
+        from app.modules.stream.transcoder import AudioTranscoder
+
+        transcoder = AudioTranscoder(
+            target_codec=stream_token.target_codec or "aac",
+            bitrate=stream_token.audio_bitrate or "384k",
+        )
+
+        if request.method == "HEAD":
+            return _apply_capitalized_headers(
+                Response(
+                    status_code=200,
+                    headers={"Cache-Control": "no-store, no-transform"},
+                    media_type="video/x-matroska",
+                )
+            )
+
+        raw_iterator = await file.stream(
+            playback_id=stream_token.playback_id,
+            user_id=user.id,
+            request=request,
+            stream_start_byte=0,
+            stream_end_byte=file.size - 1,
+        )
+
+        transcoded_iterator = transcoder.transcode_stream(
+            input_stream=raw_iterator,
+            request=request,
+        )
+
+        return _apply_capitalized_headers(
+            StreamingResponse(
+                content=transcoded_iterator,
+                media_type="video/x-matroska",
+                status_code=200,
+                headers={"Cache-Control": "no-store, no-transform"},
+            )
+        )
+
     content_type = content_types.get_content_type(file.name)
     media_type = content_type or "application/octet-stream"
 

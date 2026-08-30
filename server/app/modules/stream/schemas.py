@@ -10,6 +10,9 @@ class StreamToken(BaseModel):
     playback_id: str
     imdb_id: str | None = None
     series_info: SeriesInfo | None = None
+    transcode_audio: bool = False
+    target_codec: str | None = None
+    audio_bitrate: str | None = None
 
 
 class ParsedRangeHeader(BaseModel):

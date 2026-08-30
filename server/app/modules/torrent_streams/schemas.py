@@ -34,6 +34,16 @@ class TorrentStream(BaseModel):
     seeders: int | None = None
     attributes: list[MediaAttributeModel | IndexerDefinitionModel] = []
     is_persisted_torrent: bool
+    transcoded_play_url: str | None = None
+
+    @property
+    def has_dts(self) -> bool:
+        from app.modules.media_attributes.constants import DTS_ATTRIBUTE_KEYS
+
+        return any(
+            isinstance(attr, MediaAttributeModel) and attr.id in DTS_ATTRIBUTE_KEYS
+            for attr in self.attributes
+        )
 
     @classmethod
     def from_torrent_id(
@@ -63,6 +73,17 @@ class TorrentStream(BaseModel):
                 )
             )
 
+            transcoded_stream_token = generate_stream_token(
+                StreamToken(
+                    indexer_id=indexer_id,
+                    torrent_id=torrent_file.torrent_id,
+                    file_index=file.index,
+                    playback_id=str(uuid.uuid4()),
+                    transcode_audio=True,
+                    target_codec="aac",
+                )
+            )
+
             torrent_streams.append(
                 cls(
                     indexer_account=indexer_torrent.indexer_account,
@@ -73,6 +94,7 @@ class TorrentStream(BaseModel):
                     file_size=file.size,
                     file_index=file.index,
                     play_url=f"{app_url}/api/{user.api_key}/stream/{stream_token}",
+                    transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}",
                     seeders=indexer_torrent.seeders,
                     attributes=[],
                     is_persisted_torrent=False,
@@ -165,6 +187,19 @@ class TorrentStream(BaseModel):
             )
         )
 
+        transcoded_stream_token = generate_stream_token(
+            StreamToken(
+                indexer_id=indexer_id,
+                torrent_id=torrent_id,
+                file_index=file_index,
+                playback_id=playback_id,
+                imdb_id=indexer_torrent.imdb_id,
+                series_info=series,
+                transcode_audio=True,
+                target_codec="aac",
+            )
+        )
+
         return TorrentStream(
             indexer_account=indexer_torrent.indexer_account,
             torrent_id=torrent_id,
@@ -179,5 +214,6 @@ class TorrentStream(BaseModel):
             file_size=torrent_file_info.size,
             file_index=file_index,
             play_url=f"{app_url}/api/{user.api_key}/stream/{stream_token}",
+            transcoded_play_url=f"{app_url}/api/{user.api_key}/stream/{transcoded_stream_token}",
             is_persisted_torrent=False,
         )

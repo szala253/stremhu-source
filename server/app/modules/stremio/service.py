@@ -97,10 +97,21 @@ class StremioService:
                 user=user,
             )
 
-            return [
-                StremioStream.from_id_torrent_stream(torrent_stream=torrent_stream)
-                for torrent_stream in torrent_streams
-            ]
+            results: list[StremioStream] = []
+            for torrent_stream in torrent_streams:
+                if torrent_stream.has_dts:
+                    results.append(
+                        StremioStream.from_id_torrent_stream(
+                            torrent_stream=torrent_stream, transcoded=True
+                        )
+                    )
+                results.append(
+                    StremioStream.from_id_torrent_stream(
+                        torrent_stream=torrent_stream, transcoded=False
+                    )
+                )
+
+            return results
 
         # IMDb alapú stream lekérdezés kereséssel és feloldással
         torrent_streams, errors = await self._torrent_streams_service.find_by_imdb(
@@ -109,9 +120,18 @@ class StremioService:
             series=parsed_id.series_info,
         )
 
-        stremio_streams = [
-            StremioStream.from_imdb_torrent_stream(torrent_stream=torrent_stream)
-            for torrent_stream in torrent_streams
-        ]
+        stremio_streams: list[StremioStream] = []
+        for torrent_stream in torrent_streams:
+            if torrent_stream.has_dts:
+                stremio_streams.append(
+                    StremioStream.from_imdb_torrent_stream(
+                        torrent_stream=torrent_stream, transcoded=True
+                    )
+                )
+            stremio_streams.append(
+                StremioStream.from_imdb_torrent_stream(
+                    torrent_stream=torrent_stream, transcoded=False
+                )
+            )
 
         return stremio_streams

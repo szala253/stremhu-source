@@ -70,3 +70,12 @@ class MediaAttributeKey:
     ANNIVERSARY_EDITION = "anniversary-edition"
     THEATRICAL = "theatrical"
     BLACK_AND_WHITE = "black-and-white"
+
+
+DTS_ATTRIBUTE_KEYS: frozenset[str] = frozenset(
+    {
+        MediaAttributeKey.DTS,
+        MediaAttributeKey.DTS_HD_MA,
+        MediaAttributeKey.DTS_X,
+    }
+)

@@ -308,7 +308,7 @@ DEFAULT_ATTRIBUTES = [
         id=MediaAttributeKey.DTS_HD_MA,
         name="DTS-HD Master Audio",
         preference_id=PreferenceKey.AUDIO_QUALITY,
-        pattern=r"\b(dts[-_. ]?hd(?:[-_. ]?ma)?|dtshdma)\b",
+        pattern=r"\b(dts[-_. ]?hd(?:[-_. ]?(?:ma|hra))?|dtshd(?:ma|hra)?)\b",
         short_name="DTS-HD MA",
     ),
     MediaAttributeModel(
@@ -329,7 +329,7 @@ DEFAULT_ATTRIBUTES = [
         id=MediaAttributeKey.DTS,
         name="DTS",
         preference_id=PreferenceKey.AUDIO_QUALITY,
-        pattern=r"\b(dts(?![-_. ]?(?:hd|x)))\b",
+        pattern=r"\b(dts(?:[-_. ]?es)?(?![-_. ]?(?:hd|x)))\b",
         short_name=None,
     ),
     MediaAttributeModel(
@@ -351,7 +351,7 @@ DEFAULT_ATTRIBUTES = [
         id=MediaAttributeKey.DTS_X,
         name="DTS:X",
         preference_id=PreferenceKey.AUDIO_SPATIAL,
-        pattern=r"\b(dts[-_. ]?x)\b",
+        pattern=r"\b(dts[-_. ]?x|dtsx)\b",
         short_name=None,
     ),
     MediaAttributeModel(

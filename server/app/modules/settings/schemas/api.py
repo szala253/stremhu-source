@@ -21,6 +21,9 @@ class SystemSettingsResponse(BaseModel):
     hit_and_run: bool
     keep_seed_seconds: int
     cache_retention_seconds: int
+    enable_dts_transcoding: bool = True
+    dts_transcode_codec: str = "aac"
+    dts_transcode_bitrate: str = "384k"
 
 
 class SystemSettingsUpdateRequest(SystemSettingsUpdate):

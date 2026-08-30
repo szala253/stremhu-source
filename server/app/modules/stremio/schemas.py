@@ -152,13 +152,24 @@ class StremioStream(BaseModel):
     behavior_hints: BehaviorHints
 
     @classmethod
-    def from_id_torrent_stream(cls, torrent_stream: TorrentStream) -> StremioStream:
+    def from_id_torrent_stream(
+        cls,
+        torrent_stream: TorrentStream,
+        transcoded: bool = False,
+    ) -> StremioStream:
         file_size = f"💾 {humanize.naturalsize(torrent_stream.file_size, binary=True, format='%.2f')}"
+        name = f"{file_size} | 🔄 Transcoded AAC" if transcoded else file_size
+        url = (
+            torrent_stream.transcoded_play_url
+            if transcoded and torrent_stream.transcoded_play_url
+            else torrent_stream.play_url
+        )
 
         return cls(
-            name=file_size,
-            description=f"📁 {torrent_stream.file_name}",
-            url=torrent_stream.play_url,
+            name=name,
+            description=f"📁 {torrent_stream.file_name}"
+            + (" (Audio: AAC Transcoded)" if transcoded else ""),
+            url=url,
             behavior_hints=BehaviorHints(
                 filename=cls._build_behavior_filename(
                     file_name=torrent_stream.file_name,
@@ -176,6 +187,7 @@ class StremioStream(BaseModel):
     def from_imdb_torrent_stream(
         cls,
         torrent_stream: TorrentStream,
+        transcoded: bool = False,
     ) -> StremioStream:
         file_size = f"💾 {humanize.naturalsize(torrent_stream.file_size, binary=True, format='%.2f')}"
         seeders = f"👥 {torrent_stream.seeders}"
@@ -203,7 +215,11 @@ class StremioStream(BaseModel):
             return f"{emoji} {joined}" if emoji else joined
 
         readable_resolutions = format_group(PreferenceKey.RESOLUTION)
-        readable_audio_qualities = format_group(PreferenceKey.AUDIO_QUALITY)
+        readable_audio_qualities = (
+            "🔊 AAC (Transcoded from DTS)"
+            if transcoded
+            else format_group(PreferenceKey.AUDIO_QUALITY)
+        )
         readable_video_qualities = format_group(PreferenceKey.VIDEO_QUALITY)
         readable_audio_spatials = format_group(PreferenceKey.AUDIO_SPATIAL)
         readable_language = format_group(PreferenceKey.LANGUAGE)
@@ -238,9 +254,16 @@ class StremioStream(BaseModel):
         if torrent_stream.is_persisted_torrent:
             readable_is_persisted = "⭐"
 
+        transcoded_badge = "🔄 AAC" if transcoded else None
+
         name = " | ".join(
             compact(
-                [readable_is_persisted, readable_resolutions, readable_video_qualities]
+                [
+                    readable_is_persisted,
+                    transcoded_badge,
+                    readable_resolutions,
+                    readable_video_qualities,
+                ]
             )
         )
         description = "\n".join(
@@ -253,10 +276,16 @@ class StremioStream(BaseModel):
             media_attributes=media_attributes,
         )
 
+        url = (
+            torrent_stream.transcoded_play_url
+            if transcoded and torrent_stream.transcoded_play_url
+            else torrent_stream.play_url
+        )
+
         return cls(
             name=name,
             description=description,
-            url=torrent_stream.play_url,
+            url=url,
             behavior_hints=BehaviorHints(
                 filename=behavior_filename,
                 binge_group=binge_group,

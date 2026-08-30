@@ -46,12 +46,18 @@ class SystemSettings(BaseModel):
     hit_and_run: bool = True
     keep_seed_seconds: int = 0
     cache_retention_seconds: int = 14 * 24 * 60 * 60  # 14 nap másodpercekben
+    enable_dts_transcoding: bool = True
+    dts_transcode_codec: str = "aac"
+    dts_transcode_bitrate: str = "384k"
 
 
 class SystemSettingsUpdate(BaseModel):
     hit_and_run: bool | None = None
     keep_seed_seconds: int | None = None
     cache_retention_seconds: int | None = None
+    enable_dts_transcoding: bool | None = None
+    dts_transcode_codec: str | None = None
+    dts_transcode_bitrate: str | None = None
 
 
 class RelaySettings(BaseModel):
