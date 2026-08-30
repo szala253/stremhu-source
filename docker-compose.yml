@@ -1,0 +1,21 @@
+services:
+  stremhu-source:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stremhu-source
+    restart: unless-stopped
+    ports:
+      - "7070:7070"
+      - "6881:6881/tcp"
+      - "6881:6881/udp"
+    environment:
+      - HOST_IP=192.168.1.100 # Replace with your LAN IP (e.g. run `ipconfig getifaddr en0` on macOS)
+      # Or if using a reverse proxy domain:
+      # - REVERSE_PROXY_DOMAIN=stremhu.yourdomain.com
+      - NODE_ENV=prod
+    volumes:
+      - stremhu_data:/app/data
+
+volumes:
+  stremhu_data:

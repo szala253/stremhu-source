@@ -101,15 +101,14 @@ class AudioTranscoder:
                         break
                     proc.stdin.write(chunk)
                     await proc.stdin.drain()
-            except (BrokenPipeError, ConnectionResetError, anyio.get_cancelled_exc_class()):
+            except (BrokenPipeError, ConnectionResetError, anyio.get_cancelled_exc_class(), asyncio.CancelledError):
                 pass
             except Exception as e:
                 logger.debug(f"AudioTranscoder stdin feed notice: {e}")
             finally:
-                if proc.stdin:
+                if proc.stdin and not proc.stdin.is_closing():
                     try:
                         proc.stdin.close()
-                        await proc.stdin.wait_closed()
                     except Exception:
                         pass
 
@@ -131,11 +130,12 @@ class AudioTranscoder:
         except Exception as e:
             logger.error(f"Error during audio transcoding stream: {e}")
         finally:
-            feed_task.cancel()
-            try:
-                await feed_task
-            except (asyncio.CancelledError, Exception):
-                pass
+            if not feed_task.done():
+                feed_task.cancel()
+                try:
+                    await feed_task
+                except (asyncio.CancelledError, Exception):
+                    pass
 
             if proc.returncode is None:
                 try:
